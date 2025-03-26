@@ -1,65 +1,114 @@
 import projectList from "../mockData.js";
 
-// get all projects
+// Helper function to find project by ID
+const findProjectById = (id) => {
+  const project = projectList.find(p => p.id === parseInt(id));
+  if (!project) throw new Error('Project not found');
+  return project;
+};
+
+// Get all projects
 const getProjects = (req, res) => {
-    res.json(projectList);
-}
+  try {
+    res.status(200).json({
+      success: true,
+      data: projectList,
+      count: projectList.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
 
 // Add a new project
 const addProject = (req, res) => {
+  try {
     const { projectName } = req.body;
-  
-    // Validation: Check if projectName is provided and has more than 3 characters
+
     if (!projectName || projectName.trim().length <= 3) {
-      return res.status(400).json({ message: "Project name must be more than 3 characters." });
+      return res.status(400).json({ 
+        success: false,
+        error: "Project name must be more than 3 characters." 
+      });
     }
-  
-    // Create a new project object
-    const newProject = { id: projectList.length + 1, projectName };
-  
-    // Add the new project to the projectList array
-    projectList.push(newProject);
-  
-    // Calculate the total number of projects
-    const totalProjects = projectList.length;
-  
-    // Return the new project and totalProjects in the response
-    res.status(201).json({ newProject, totalProjects });
-  };
 
-// update Project 
+    const newProject = { 
+      id: projectList.length + 1, 
+      projectName: projectName.trim() 
+    };
+
+    projectList.push(newProject);
+
+    res.status(201).json({
+      success: true,
+      data: newProject,
+      count: projectList.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+// Update project
 const updateProject = (req, res) => {
+  try {
     const { id } = req.params;
     const { projectName } = req.body;
 
-    const project = projectList.find((project) => project.id === parseInt(id))
-    if (!project) res.status(404).send('Project not found');
-
-    project.projectName = projectName || project.projectName;
-    res.json(project);
-}
-
-
-// Delete a project
-const deleteProject = (req, res) => {
-    const { id } = req.params;
-  
-    // Find the index of the project to delete
-    const index = projectList.findIndex((project) => project.id === parseInt(id));
-  
-    // If project not found, return 404
-    if (index === -1) {
-      return res.status(404).json({ message: "Project not found" });
+    if (!projectName || projectName.trim().length <= 3) {
+      return res.status(400).json({ 
+        success: false,
+        error: "Project name must be more than 3 characters." 
+      });
     }
-  
-    // Remove the project from the list
-    projectList.splice(index, 1);
-  
-    // Calculate the updated total number of projects
-    const totalProjects = projectList.length;
-  
-    // Return success response with updated totalProjects
-    res.status(200).json({ message: "Project deleted successfully", totalProjects });
-  };
+
+    const project = findProjectById(id);
+    project.projectName = projectName.trim();
+
+    res.status(200).json({
+      success: true,
+      data: project,
+      count: projectList.length
+    });
+  } catch (error) {
+    const status = error.message === 'Project not found' ? 404 : 500;
+    res.status(status).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+// Delete project
+const deleteProject = (req, res) => {
+  try {
+    const { id } = req.params;
+    const projectIndex = projectList.findIndex(p => p.id === parseInt(id));
+    
+    if (projectIndex === -1) {
+      throw new Error('Project not found');
+    }
+
+    projectList.splice(projectIndex, 1);
+
+    res.status(200).json({
+      success: true,
+      message: 'Project deleted successfully',
+      count: projectList.length
+    });
+  } catch (error) {
+    const status = error.message === 'Project not found' ? 404 : 500;
+    res.status(status).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
 
 export { getProjects, addProject, updateProject, deleteProject };
